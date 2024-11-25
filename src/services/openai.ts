@@ -10,7 +10,7 @@ const prompt = `Analyze the following forex news and provide a detailed assessme
 3. Key Related Keywords: Extract up to 3 main keywords from the news.
 4. Trading Recommendation: Suggest an action (buy, sell, wait) based on the analysis.
 5. Confidence Score: Provide a confidence score for the analysis on a scale from 0 to 1, with 1 being highly confident.
-6. Rationale: Briefly explain the reasoning behind the sentiment, impact, and recommendation.`; 
+6. Rationale: Briefly explain the reasoning behind the sentiment, impact, and recommendation.`
 
 News: ${news.map(item => `
 Title: ${item.title}
