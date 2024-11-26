@@ -28,7 +28,7 @@ Description: ${item.description}
         content: prompt,
       },
     ],
-    temperature: 0.3,
+    temperature: 0.7,
   });
 
   const analysis = response.choices[0].message.content;
@@ -82,7 +82,7 @@ function parseAIResponse(analysis: string, originalNews: NewsItem[]) {
       ...currentSignal,
       timestamp: new Date().toISOString(),
       newsSource: newsItems.slice(0, 2),
-      pair: 'EUR/USD',
+      pair: 'USD/CAD',
     },
   };
 }
