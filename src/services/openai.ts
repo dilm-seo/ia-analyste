@@ -34,7 +34,7 @@ Description: ${item.description}
 
   const analysis = response.choices[0].message.content;
 
-  // Debugging step to see the AI's raw response
+  // Debugging: Print AI response for verification
   console.log('AI Response:', analysis);
 
   return parseAIResponse(analysis, news);
@@ -74,7 +74,7 @@ function parseAIResponse(analysis: string, originalNews: NewsItem[]) {
     } else if (line.toLowerCase().includes('confidence')) {
       const confidenceMatch = line.match(/[\d.]+/);
       if (confidenceMatch) {
-        currentSignal.confidence = Math.min(Math.max(parseFloat(confidenceMatch[0]), 0), 1);
+        currentSignal.confidence = Math.min(Math.max(parseFloat(confidenceMatch[0]), 0.1), 0.95); // Limiter entre 10 % et 95 %
         console.log('Confidence extracted:', currentSignal.confidence); // Debug
       } else {
         console.log('Confidence not found in line:', line); // Debug if extraction fails
@@ -87,12 +87,20 @@ function parseAIResponse(analysis: string, originalNews: NewsItem[]) {
   // Fallback for confidence score if not extracted
   if (currentSignal.confidence === 0.5) {
     if (newsItems[0].impact === 'high') {
-      currentSignal.confidence = 0.9;
+      currentSignal.confidence = 0.75; // Réduire la confiance pour les impacts élevés
     } else if (newsItems[0].impact === 'medium') {
-      currentSignal.confidence = 0.7;
+      currentSignal.confidence = 0.6; // Moyen : 60 %
     } else {
-      currentSignal.confidence = 0.5;
+      currentSignal.confidence = 0.5; // Faible reste à 50 %
     }
+  }
+
+  // Recalibration based on impact and confidence
+  if (currentSignal.confidence > 0.9 && newsItems[0].impact !== 'high') {
+    currentSignal.confidence = 0.8; // Si confiance > 90% mais impact non élevé, réduire
+  }
+  if (currentSignal.confidence < 0.1) {
+    currentSignal.confidence = 0.2; // Si trop faible, le forcer à un minimum de 20%
   }
 
   // Fallback for pair detection if not provided by AI
