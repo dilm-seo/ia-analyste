@@ -4,13 +4,12 @@ import type { NewsItem } from '../types';
 export async function analyzeNewsWithAI(news: NewsItem[], apiKey: string, model: string) {
   const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
 
-const prompt = `Analyze the following forex news and provide a detailed assessment with the following points:
-1. Sentiment: Identify the overall sentiment (bullish, bearish, neutral).
-2. Impact Level: Assess the potential market impact (low, medium, high).
-3. Key Related Keywords: Extract up to 3 main keywords from the news.
-4. Trading Recommendation: Suggest an action (buy, sell, wait) based on the analysis.
-5. Confidence Score: Provide a confidence score for the analysis on a scale from 0 to 1, with 1 being highly confident.
-6. Rationale: Briefly explain the reasoning behind the sentiment, impact, and recommendation.`
+  const prompt = `Analyze the following forex news and provide:
+1. Sentiment (bullish/bearish/neutral)
+2. Impact level (low/medium/high)
+3. Related keywords (max 3)
+4. Trading recommendation (buy/sell/wait)
+5. Confidence score (0-1)
 
 News: ${news.map(item => `
 Title: ${item.title}
