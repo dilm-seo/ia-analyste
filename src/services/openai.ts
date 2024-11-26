@@ -10,7 +10,7 @@ export async function analyzeNewsWithAI(news: NewsItem[], apiKey: string, model:
 3. Related keywords (max 3)
 4. Trading recommendation (buy/sell/wait)
 5. Confidence score (0-1)
-6. Identify relevant currency pair.
+6. Based on the news content, specify the relevant currency pair (e.g., EUR/USD, USD/JPY).
 
 News: ${news.map(item => `
 Title: ${item.title}
@@ -33,6 +33,10 @@ Description: ${item.description}
   });
 
   const analysis = response.choices[0].message.content;
+
+  // Debugging step to see the AI's raw response
+  console.log('AI Response:', analysis);
+
   return parseAIResponse(analysis, news);
 }
 
@@ -42,7 +46,7 @@ function parseAIResponse(analysis: string, originalNews: NewsItem[]) {
   let currentSignal = {
     action: 'wait' as const,
     confidence: 0.5,
-    pair: 'Unknown', // Default pair if not specified
+    pair: 'Unknown', // Default value
   };
 
   lines.forEach(line => {
@@ -70,10 +74,15 @@ function parseAIResponse(analysis: string, originalNews: NewsItem[]) {
     } else if (line.includes('Confidence:')) {
       const confidence = parseFloat(line.match(/[\d.]+/)?.[0] || '0.5');
       currentSignal.confidence = Math.min(Math.max(confidence, 0), 1);
-    } else if (line.includes('Relevant pair:')) {
-      currentSignal.pair = line.replace('Relevant pair:', '').trim();
+    } else if (line.toLowerCase().includes('pair')) {
+      currentSignal.pair = line.split(':')[1]?.trim() || 'Unknown';
     }
   });
+
+  // Fallback: detect pair if still unknown
+  if (currentSignal.pair === 'Unknown') {
+    currentSignal.pair = detectCurrencyPair(newsItems[0]);
+  }
 
   return {
     analyzedNews: newsItems,
@@ -83,4 +92,16 @@ function parseAIResponse(analysis: string, originalNews: NewsItem[]) {
       newsSource: newsItems.slice(0, 2), // Include the top two news items for reference
     },
   };
+}
+
+function detectCurrencyPair(news: NewsItem): string {
+  const pairs = ['USD/CAD', 'EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/NZD', 'XAU/USD', 'BTC/USD'];
+  const text = `${news.title} ${news.description}`.toUpperCase();
+
+  for (const pair of pairs) {
+    if (text.includes(pair.replace('/', ' ')) || text.includes(pair)) {
+      return pair;
+    }
+  }
+  return 'Unknown';
 }
