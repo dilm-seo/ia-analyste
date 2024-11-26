@@ -45,8 +45,8 @@ function parseAIResponse(analysis: string, originalNews: NewsItem[]) {
   const newsItems = [...originalNews];
   let currentSignal = {
     action: 'wait' as const,
-    confidence: 0.5,
-    pair: 'Unknown', // Default value
+    confidence: 0.5, // Default confidence
+    pair: 'Unknown', // Default pair if not identified
   };
 
   lines.forEach(line => {
@@ -71,15 +71,31 @@ function parseAIResponse(analysis: string, originalNews: NewsItem[]) {
       const rec = line.toLowerCase();
       if (rec.includes('buy')) currentSignal.action = 'buy';
       else if (rec.includes('sell')) currentSignal.action = 'sell';
-    } else if (line.includes('Confidence:')) {
-      const confidence = parseFloat(line.match(/[\d.]+/)?.[0] || '0.5');
-      currentSignal.confidence = Math.min(Math.max(confidence, 0), 1);
+    } else if (line.toLowerCase().includes('confidence')) {
+      const confidenceMatch = line.match(/[\d.]+/);
+      if (confidenceMatch) {
+        currentSignal.confidence = Math.min(Math.max(parseFloat(confidenceMatch[0]), 0), 1);
+        console.log('Confidence extracted:', currentSignal.confidence); // Debug
+      } else {
+        console.log('Confidence not found in line:', line); // Debug if extraction fails
+      }
     } else if (line.toLowerCase().includes('pair')) {
       currentSignal.pair = line.split(':')[1]?.trim() || 'Unknown';
     }
   });
 
-  // Fallback: detect pair if still unknown
+  // Fallback for confidence score if not extracted
+  if (currentSignal.confidence === 0.5) {
+    if (newsItems[0].impact === 'high') {
+      currentSignal.confidence = 0.9;
+    } else if (newsItems[0].impact === 'medium') {
+      currentSignal.confidence = 0.7;
+    } else {
+      currentSignal.confidence = 0.5;
+    }
+  }
+
+  // Fallback for pair detection if not provided by AI
   if (currentSignal.pair === 'Unknown') {
     currentSignal.pair = detectCurrencyPair(newsItems[0]);
   }
